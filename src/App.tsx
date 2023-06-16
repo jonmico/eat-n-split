@@ -60,6 +60,17 @@ export default function App() {
     setShowAddFriend(false);
   }
 
+  function handleSplitBill(value: number) {
+    setFriends((f) =>
+      f.map((friend) =>
+        friend.id === selectedFriend?.id
+          ? { ...friend, balance: friend.balance + value }
+          : friend
+      )
+    );
+    setSelectedFriend(null);
+  }
+
   return (
     <div className='app'>
       <div className='sidebar'>
@@ -75,7 +86,12 @@ export default function App() {
           {showAddFriend ? 'Close' : 'Add friend'}
         </Button>
       </div>
-      {selectedFriend && <FormSplitBill selectedFriend={selectedFriend} />}
+      {selectedFriend && (
+        <FormSplitBill
+          selectedFriend={selectedFriend}
+          onSplitBill={handleSplitBill}
+        />
+      )}
     </div>
   );
 }
@@ -113,11 +129,6 @@ interface FriendProps {
 
 function Friend({ friend, onSelection, selectedFriend }: FriendProps) {
   const { name, image, balance, id } = friend;
-  // let isSelected = false;
-
-  // if (selectedFriend) {
-  //   isSelected = selectedFriend.id === id;
-  // }
 
   const isSelected = selectedFriend?.id === id;
 
@@ -193,17 +204,25 @@ function FormAddFriend({ onAddFriend }: FormAddFriendProps) {
 
 interface FormSplitBillProps {
   selectedFriend: Friend;
+  onSplitBill: (amount: number) => void;
 }
 
-function FormSplitBill({ selectedFriend }: FormSplitBillProps) {
+function FormSplitBill({ selectedFriend, onSplitBill }: FormSplitBillProps) {
   const { name } = selectedFriend;
   const [bill, setBill] = useState(0);
   const [paidByUser, setPaidByUser] = useState(0);
   const paidByFriend = paidByUser ? bill - paidByUser : 0;
   const [whoIsPaying, setWhoIsPaying] = useState('user');
 
+  function handleSubmit(evt: FormEvent<HTMLFormElement>) {
+    evt.preventDefault();
+
+    if (!bill || !paidByUser) return;
+    onSplitBill(whoIsPaying === 'user' ? paidByFriend : -paidByUser);
+  }
+
   return (
-    <form className='form-split-bill'>
+    <form className='form-split-bill' onSubmit={handleSubmit}>
       <h2>Split a bill with {name}</h2>
 
       <label>💰 Bill value</label>
